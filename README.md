@@ -4,9 +4,9 @@
 
 > **Unofficial project.** This is independent software. It is not made, endorsed, sponsored or supported by Proton AG, and uses only Proton's publicly available Drive CLI as a separate, separately installed tool. "Proton" and "Proton Drive" are trademarks of Proton AG, used here only to name the service this works with.
 
-**Back up your self-hosted apps to Proton Drive, and know for certain that it worked.**
+**Back up your self-hosted apps to Proton Drive, with verification beyond an upload exit code.**
 
-Most home-server backups fail quietly: the job "ran", the file never landed or was half-written, and nobody finds out until the day they need it. This tool is the last mile that closes that gap. It uploads with Proton's official command-line tool, then **lists the file back from Proton and checks its size before counting the backup as done**. A separate monitor tells you if no verified backup has happened for 48 hours. A restore check proves the data inside is intact.
+Some backup failures are silent: a job can exit successfully without leaving the expected remote object, or nobody notices a missed run. This tool addresses those gaps. It uploads with Proton's official command-line tool, then **lists the file back from Proton and checks its size before counting the backup as done**. A separate monitor alerts if no verified backup has happened for 48 hours. A manually triggered download/restore check validates archive hashes and supported file formats; confirming that applications actually recover still requires an application-level restore rehearsal.
 
 It is a handful of plain Python scripts (standard library only) and systemd timers. You say which apps to back up in a config file; it does the rest.
 
@@ -17,7 +17,7 @@ The usual advice for self-hosting is: dump your databases, archive your files, p
 | You already do this | This adds |
 | --- | --- |
 | Run a nightly script that uploads a backup | Proof the upload landed with the right size, not just that the script exited 0 |
-| Back up several apps | One all-or-nothing backup, so you never restore a database from Tuesday next to files from Friday |
+| Back up several apps | One complete-or-rejected generation of all registered captures; quiesce writes or coordinate snapshots if related apps need point-in-time consistency |
 | Keep old copies | Retention that only deletes old backups *after* the new one is verified |
 | Hope you'd notice a failure | A dead-man alert that fires if there has been no verified backup for 48 hours, independent of your apps |
 | Mean to test a restore someday | One command that downloads a backup, checks every file's hash and opens the databases |
@@ -130,7 +130,7 @@ Hermes and Hindsight are the two this repository ships helpers for. Finance, Fit
 
 ## Evidence and boundaries
 
-The upload, listing, verification, retention and monitoring approach here comes from the pipeline that backs up the author's own systems to a live Proton Drive account every day. In that use the independent dead-man alert has caught multiple real failures, off-provider round trips and restore checks have been run, and a gated, text-only recovery of the agent and its memory onto a surviving host was rehearsed on 21 October 2026.
+The upload, listing, verification, retention and monitoring approach here comes from the author's production pipeline, scheduled to back up their own systems to a live Proton Drive account daily. In that use the independent dead-man alert has caught multiple real failures, off-provider round trips and restore checks have been run, and a gated, text-only recovery of the agent and its memory onto a surviving host was rehearsed on 21 October 2026.
 
 This package's own tests and demo run offline against a fake CLI, so you can try everything without an account. Not yet exercised: a full clean-host rebuild and live failover. The [case study](CASE_STUDY.md) has the precise claims and caveats.
 

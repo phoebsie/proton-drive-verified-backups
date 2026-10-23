@@ -2,7 +2,7 @@
 
 Every app you back up is a **participant** in your config file. The tool runs your command with a private empty directory, replaces the standalone token `{output_dir}` with its path, and then requires that the command produced **exactly** the files you listed in `files`, each passing its type check (`file`, `sqlite`, `zip` or `json`). A non-zero exit, a missing or extra file, or a failed check aborts the whole backup before anything is uploaded.
 
-Participants run in the order you list them. Put databases before the file folders they describe. A database captured first never refers to a file the later folder copy lacks, whereas the reverse order can leave records pointing at files that are missing.
+Participants run sequentially in the order you list them. **Capture order alone does not make a database and its related files a consistent point-in-time snapshot.** An application can create, modify or delete files between captures in either direction. If database rows and files must match, pause writes or use the application's supported coordinated snapshot, then rehearse restoring them together. The runner proves that every configured capture completed and passed its declared type checks, not cross-application transactional consistency.
 
 Commands run with a minimal environment (`PATH=/usr/bin:/bin`). Use absolute paths, or add variables under `capture_env` in the config. Output from the command is discarded, so test it by hand first.
 
@@ -69,17 +69,9 @@ This was tested: with a dump command that printed part of a dump and then failed
 
 ## Putting it together: a household paperwork server
 
-A complete `participants` list for three apps (SQLite password manager, Postgres-backed document manager and its scans) is simply recipes 1, 3 and 2, in that order, in one config file:
+To combine these examples, put the **complete JSON participant objects** from recipes 1, 3 and 2 in your config's `participants` array. Recipe names and ellipses are not valid JSON placeholders. The combination was tested using stand-in data and a stand-in dump command: the archive contained all three participants and `manifest.json`, and `verify` passed. The failing-dump case confirmed that a broken capture stops the whole backup.
 
-```json
-"participants": [
-  { ...vaultwarden, recipe 1... },
-  { ...paperless-db, recipe 3... },
-  { ...paperless-files, recipe 2... }
-]
-```
-
-This exact shape, with a stand-in dump command, was run end to end: the archive contained all three participants plus `manifest.json`, and `verify` passed. Then the failure case above was run to confirm that a broken dump stops the whole backup.
+For real Paperless or Vaultwarden data, arrange an application-consistent capture of each database and its associated files first; this example does not implement such coordination.
 
 ## What not to put here
 

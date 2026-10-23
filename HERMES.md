@@ -58,18 +58,18 @@ Run it as the same user that owns the Hermes home, because Hermes must read its 
 
 The helper submits an export (including observations and knowledge base), waits for it, downloads it from loopback only and checks the zip. Use your own port and bank name. It has been exercised against synthetic responses and the 0.10.x API shape, so check it against your Hindsight version.
 
-With both participants in one config, the agent and its memory are captured **together** as one all-or-nothing generation. You never restore memory from a different day than the agent that uses it.
+With both participants in one config, the agent and its memory are captured in the **same complete-or-rejected generation**. Captures are sequential, not a transactionally simultaneous snapshot; coordinate or pause changes during capture if both services must represent the same point in time.
 
 ## Restoring
 
-1. Install a clean, compatible Hermes and keep it stopped, or paused so it does not talk to your channels.
-2. Download and check the backup: `scripts/dr --config <config> verify <object name>`. Do this first; a failed check means do not restore from it.
-3. Take `hermes/native-full.zip` from the verified archive (the package gives you the validated files; it does not restore them for you).
-4. Import it with Hermes' own command: `hermes import <zip>`.
-5. For Hindsight, rebuild the service and load the exported bank with its document-transfer import, then prove recall with a few known queries.
-6. Re-enter credentials the backup deliberately leaves out, then switch your channels back on.
+1. **Prevent two active agents.** Fence the old agent before promotion: hold jobs and proactive actions and prevent old channels from reconnecting. For a rehearsal, isolate the recovery target and do not provision live messaging credentials. A missing ping alone is not proof of fencing.
+2. Install a compatible Hermes on a gated target, kept stopped or globally paused, with channel credentials removed or escrowed and scheduled jobs held. Use a reviewed configuration and backup-compatible runtime version.
+3. Verify the selected object first: `scripts/dr --config <config> verify <object name> --sha256 <trusted archive digest>`. If a trusted receipt is already present, the explicit `--sha256` can be omitted. If verification fails, stop.
+4. **Download and materialise separately.** The `verify` command deletes its temporary download and extraction before returning: it does **not** leave `hermes/native-full.zip` available to import, and this package has no one-step restore command. Download the **same** object again into a private staging directory, confirm its SHA-256 against a separately trusted digest, then validate and extract it using `dr.archive.validate_archive` followed by `dr.archive.extract_archive`. Check the extracted participant files against the manifest/config before use. See [RESTORE.md](RESTORE.md). Never extract an unchecked archive onto a live state directory.
+5. Import the staged `hermes/native-full.zip` using Hermes' supported `hermes import`, still on the gated target. If Hindsight is configured, import its staged export through the supported document-transfer API and prove recall before declaring memory ready.
+6. Recommission excluded identities and credentials; validate representative behaviour and backups; only then enable one authoritative agent's channels and schedules. Quarantine any returning old host. Reconciliation after a real failover is a separately reviewed process.
 
-Keep exactly one live copy of the agent. If an old host comes back after you have promoted a new one, quarantine it before anything is merged.
+The standalone package verifies backups and supplies archive helpers; it does **not** automatically restore application state, fence hosts or promote an agent.
 
 ## Things to know
 
