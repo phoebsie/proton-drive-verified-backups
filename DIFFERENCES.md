@@ -1,5 +1,7 @@
 # Derivation and intentional differences
 
+This page is for readers curious how this package differs from the author's private production code. You do not need it to use the package.
+
 Transport, manifest, streaming tar+zstd and retention modules are adapted from Phoebie Agent production DR code and distributed under this project's MIT licence. This is a standalone reference; production operator and private agent implementations are not included.
 
 | Area | Retained behavior | Reference changes/unsupported features |

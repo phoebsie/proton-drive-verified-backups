@@ -1,4 +1,8 @@
-# Phoebie Agent: two-host disaster recovery
+# Worked example: Phoebie Agent's two-host disaster recovery
+
+> This is one real deployment, described so you can see the scripts used end to end. **Nothing here is required to use the package.** You register your own applications; see the [README](README.md#back-up-your-own-applications).
+>
+> Plain-language key: **Hermes** is [Hermes Agent](https://github.com/NousResearch/hermes-agent), an open-source AI agent runtime. **Hindsight** is [Hindsight](https://github.com/vectorize-io/hindsight), an open-source long-term memory service for agents. **Finance** and **Fitness** are the author's own personal apps (each backed by a SQLite database). The **auth service** is the login service in front of them. **Home** is a home server; the **VPS** is a rented server.
 
 Phoebie is a personal-agent ecosystem: Hermes is its runtime, Hindsight its durable semantic memory, Finance/Fitness own specialist state, and an auth service owns authentication. Personal identities, endpoints, accounts, bank names, paths, key IDs and operator receipts are omitted here.
 
