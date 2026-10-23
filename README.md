@@ -4,26 +4,54 @@
 
 > **Unofficial project.** This is independent software. It is not made, endorsed, sponsored or supported by Proton AG, and uses only Proton's publicly available Drive CLI as a separate, separately installed tool. "Proton" and "Proton Drive" are trademarks of Proton AG, used here only to name the service this works with.
 
-Daily, **verified** backups of your self-hosted applications to Proton Drive, using Proton's official command-line tool. A backup only counts once the uploaded file has been listed back from Proton with the right size, and a separate monitor alerts you if no verified backup has happened for 48 hours.
+**Back up your self-hosted apps to Proton Drive, and know for certain that it worked.**
 
-It is a set of plain Python scripts (standard library only) plus systemd timers. You tell it which applications to back up in a config file; it handles the archive, the upload, the checks, retention, alerting and restore validation.
+Most home-server backups fail quietly: the job "ran", the file never landed or was half-written, and nobody finds out until the day they need it. This tool is the last mile that closes that gap. It uploads with Proton's official command-line tool, then **lists the file back from Proton and checks its size before counting the backup as done**. A separate monitor tells you if no verified backup has happened for 48 hours. A restore check proves the data inside is intact.
 
-## What you get
+It is a handful of plain Python scripts (standard library only) and systemd timers. You say which apps to back up in a config file; it does the rest.
 
-- **Upload that is checked, not trusted.** The CLI's exit code never counts as success. A separate `filesystem list --json` must show exactly one matching object with the expected size.
-- **All-or-nothing generations.** Every application you register is captured, hashed into a manifest and validated locally before anything is uploaded. One failed capture means no upload and no freshness update.
-- **Bounded retention.** Keeps up to five daily, two weekly and two monthly generations (at most nine), moves expired ones to trash, and only after the new backup is verified. It never empties your Proton trash.
-- **An independent dead-man alert.** A separate systemd timer checks every 30 minutes, does not depend on your applications, and sends an HTTPS notification (ntfy-compatible) if there is no verified backup for 48 hours, after repeated failures, or if its own status file is unreadable.
-- **Restore validation.** `verify` downloads a named backup, checks every file's hash and size against the manifest, and runs SQLite and ZIP integrity checks.
-- **Safe process handling.** The CLI is run without a shell, with credentials never in arguments, and the CLI binary is checked against a recorded SHA-256 before each operation.
+## What problem does it solve?
 
-## Who it's for
+The usual advice for self-hosting is: dump your databases, archive your files, push them off-site, test restores, and monitor the whole thing. Most guides stop after "push them off-site". This project does the unglamorous remaining steps:
 
-Anyone running a home server, NAS or VPS who wants encrypted off-site copies in Proton Drive, and wants proof that they exist and can be restored. You do not need any of the applications mentioned below. The example setup happens to back up a self-hosted AI agent, which is why those adapters exist, but the scheduler, verification, retention and alerting work for any application that can write its state to files.
+| You already do this | This adds |
+| --- | --- |
+| Run a nightly script that uploads a backup | Proof the upload landed with the right size, not just that the script exited 0 |
+| Back up several apps | One all-or-nothing backup, so you never restore a database from Tuesday next to files from Friday |
+| Keep old copies | Retention that only deletes old backups *after* the new one is verified |
+| Hope you'd notice a failure | A dead-man alert that fires if there has been no verified backup for 48 hours, independent of your apps |
+| Mean to test a restore someday | One command that downloads a backup, checks every file's hash and opens the databases |
+
+## What could I use it for?
+
+It backs up whatever you can express as "a command that writes some files". A few realistic setups (illustrations; see [RECIPES.md](RECIPES.md) for the configs):
+
+- **A household paperwork server.** Paperless-ngx (a database plus a folder of scanned bills and tax papers), Vaultwarden (family passwords, one SQLite file) and Home Assistant (a config folder), all captured together into one verified backup in Proton Drive, which suits your most private documents.
+- **A club or volunteer organisation.** A membership database and a folder of signed waivers, run by a treasurer who changes every couple of years. The restore check is a single command the next volunteer can run without knowing the system.
+- **A small game server.** A world folder and a few plugin databases, backed up nightly, with a phone alert if it stops.
+- **A one-person business.** Bookkeeping or CRM databases plus an invoices folder, where "I think the backup is running" is not good enough.
+- **A self-hosted AI agent.** This is how the author uses it, to back up an agent's state and memory. See the [worked example](#worked-example-how-the-author-uses-it).
+
+## Is it a good fit?
+
+**Good fit**
+- App state from a few megabytes to a few gigabytes (databases, config, documents, scans, game worlds). The hard limit is 20 GiB per backup, expanded.
+- Several apps that should be backed up as one consistent set.
+- You use Proton Drive, or want an encrypted off-site copy you control.
+- You want to be told when backups stop, and want a restore check you can actually run.
+
+**Not a good fit**
+- Large media libraries (photo or video archives, a NAS full of films). Every run builds and uploads one full archive. There are no incremental backups, so use a deduplicating tool such as restic or Borg for bulk data.
+- File sync or continuous mirroring.
+- Whole-machine or bare-metal images.
+- Windows, macOS, or setups without systemd and root. It targets Linux servers.
+- Automatic restore or failover. It validates a backup; it does not reinstall your apps.
+
+It is a reference implementation, and the scripts have not been run against a live Proton account yet. See [Evidence and boundaries](#evidence-and-boundaries).
 
 ## Try it offline in five minutes
 
-Linux, Python 3.12+ (tested on 3.13 and 3.14) and `zstd` are required. No Python packages, accounts, network calls or privileged installation are needed:
+You need Linux, Python 3.12+ (tested on 3.13 and 3.14) and `zstd`. No Python packages, accounts, network access or root:
 
 ```sh
 python3 -m unittest discover -s tests -v
@@ -40,22 +68,36 @@ subprocess.run(['scripts/dr', '--config', str(config), 'verify', name], check=Tr
 PY
 ```
 
-A fake CLI stores objects under `.demo/remote` and never contacts Proton. The demo registers five stand-in applications named `finance`, `fitness`, `hermes`, `hindsight` and `auth`. These are only labels taken from the author's own setup; you can name yours anything. The data is invented, and none of it is a backup of a real application.
+A fake CLI stores objects under `.demo/remote` and never contacts Proton. The demo backs up five stand-in apps named `finance`, `fitness`, `hermes`, `hindsight` and `auth`. Those are only labels from the author's own setup; the data is invented, and you can name yours anything.
 
-## Back up your own applications
+## Back up your own apps
 
-Each application you want backed up is a **participant** in your config file: a name, a command that writes its state into a directory the runner provides, and an allowlist of the files that command may produce (each marked as `file`, `sqlite`, `zip` or `json`). The runner rejects missing or unexpected files and malformed SQLite or ZIP content, and every participant is mandatory.
+Each app you want backed up is a **participant** in your config file: a name, a command that writes its data into a directory the tool provides, and a list of the files that command is allowed to produce, each marked `file`, `sqlite`, `zip` or `json`. Every participant is mandatory: if one capture fails, nothing is uploaded and the freshness clock does not advance.
 
-Capture helpers included:
+A participant looks like this (a SQLite-backed app, using the included helper):
+
+```json
+{
+  "id": "vaultwarden",
+  "argv": ["/opt/dr-reference/scripts/sqlite-capture",
+           "--source", "/srv/vaultwarden/data/db.sqlite3", "{output_dir}"],
+  "files": {"state.sqlite3": "sqlite"},
+  "timeout_s": 600
+}
+```
+
+For anything that is not SQLite, give it any command that writes the allowed files. [RECIPES.md](RECIPES.md) has patterns for a folder of files and for a database dump (such as `pg_dump`), run end to end with stand-in data, plus one trap worth knowing about: **a dump piped into `gzip` can silently produce a truncated backup that still passes every check, unless you use `set -o pipefail`.**
 
 | Helper | Backs up | Notes |
 | --- | --- | --- |
-| `scripts/sqlite-capture` | Any SQLite database | Uses SQLite's online backup API, includes committed WAL data, checks integrity. Works for most self-hosted apps. |
-| `scripts/hermes-capture` | [Hermes Agent](https://github.com/NousResearch/hermes-agent) (open-source AI agent) | Runs its native full `hermes backup`. A simple adapter; see [ADAPTERS.md](ADAPTERS.md) for limits. |
-| `scripts/hindsight-capture` | A [Hindsight](https://github.com/vectorize-io/hindsight) memory bank (open-source agent memory) | Calls its export API on loopback. Tested against synthetic responses only. |
-| Your own command | Anything else | Any executable that writes the allowed files and exits 0 only when the capture is complete. |
+| `scripts/sqlite-capture` | Any SQLite database | Uses SQLite's online backup API, includes committed WAL data, checks integrity. |
+| Your own command | Folders, `pg_dump`/`mysqldump` output, anything | See [RECIPES.md](RECIPES.md). |
+| `scripts/hermes-capture` | [Hermes Agent](https://github.com/NousResearch/hermes-agent) (open-source AI agent) | Optional. Runs its native full backup. |
+| `scripts/hindsight-capture` | A [Hindsight](https://github.com/vectorize-io/hindsight) memory bank (open-source agent memory) | Optional. Tested against synthetic responses only. |
 
-The Hermes and Hindsight helpers are optional. Ignore them if you do not run those tools. [ADAPTERS.md](ADAPTERS.md) specifies the capture interface in full.
+Ignore the Hermes and Hindsight helpers unless you run those tools. [ADAPTERS.md](ADAPTERS.md) specifies the capture interface in full.
+
+To go live with your own Proton account, follow [SETUP.md](SETUP.md): install and pin the CLI, set up the credential store, register your apps, configure notifications and enable the systemd units. Expect an hour or two if you are comfortable with Linux, GPG and systemd. [RESTORE.md](RESTORE.md) explains validation and recovery, and [SECURITY.md](SECURITY.md) describes the threat boundary.
 
 ## How a backup runs
 
@@ -71,8 +113,6 @@ The Hermes and Hindsight helpers are optional. Ignore them if you do not run tho
 The monitor alerts after more than 48 hours without verification, two consecutive failures, an invalid status or time, or a retention failure. If no backup has ever been recorded it alerts immediately. Healthy checks produce only their JSON result. A persistent condition repeats at most once per 24 hours, and failed delivery is not treated as acknowledged.
 
 Listing proves presence and size, **not remote-content integrity**. `verify` separately downloads the exact named object, compares a trusted archive hash when you provide one, validates member hashes and runs SQLite and ZIP checks. Run it after setup, after changes and periodically. No restore timer is installed.
-
-For your own Proton account, follow [SETUP.md](SETUP.md): install and pin the CLI, set up the credential store, register your applications, configure notifications and enable the systemd units. [RESTORE.md](RESTORE.md) explains validation and recovery. [SECURITY.md](SECURITY.md) describes the threat boundary.
 
 ## Worked example: how the author uses it
 
@@ -110,6 +150,7 @@ Scoped headless token or service-account authentication would also avoid the loc
 - `dr/`: the transport, manifests, archive streaming, retention, captures, receipts and monitor.
 - `scripts/`: the command-line tool, capture helpers, synthetic demo fixtures and the optional GPG preset.
 - `examples/`: invented configuration. `systemd/`: daily, boot and monitor units. `tests/`: offline fault tests.
+- [RECIPES.md](RECIPES.md): tested patterns for folders and database dumps, and the `pipefail` trap.
 - [CASE_STUDY.md](CASE_STUDY.md): the author's deployment as a worked example. [DIFFERENCES.md](DIFFERENCES.md): changes from the author's production code.
 
 No production operator access, deployment logic or application-specific intelligence from the author's system is included. The Hindsight helper is a generic export API client only.
