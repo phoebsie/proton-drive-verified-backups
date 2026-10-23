@@ -227,11 +227,13 @@ def parse_list_output(text: str) -> list[RemoteObject]:
             )
         if size_raw is None:
             size_raw = item.get("totalStorageSize")
-        size: int | None
-        try:
-            size = int(size_raw) if size_raw is not None else None
-        except (TypeError, ValueError):
-            size = None
+        # JSON booleans/floats are not byte counts. int(12.9) must never
+        # turn malformed metadata into a matching expected size.
+        size: int | None = None
+        if type(size_raw) is int and size_raw >= 0:
+            size = size_raw
+        elif isinstance(size_raw, str) and re.fullmatch(r"[0-9]+", size_raw):
+            size = int(size_raw)
         objects.append(RemoteObject(name=name, size=size, raw=item))
     return objects
 

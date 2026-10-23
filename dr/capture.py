@@ -84,6 +84,8 @@ def validate_payload(config, manifest, root):
         raise ValueError('generation missing or duplicates a required participant')
     for part in manifest.participants:
         entry = expected[part['id']]
+        if part.get('capture_contract') != entry.get('contract', 'command-v1'):
+            raise ValueError('generation capture contract is incompatible')
         paths = {f"{entry['id']}/{name}" for name in entry['files']}
         if part['status'] != 'captured' or {r['path'] for r in part['members']} != paths:
             raise ValueError('generation participant contract mismatch')

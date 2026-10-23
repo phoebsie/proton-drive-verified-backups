@@ -8,6 +8,12 @@ from .state import locked, read, write
 
 
 def condition(status, now):
+    if not isinstance(status, dict):
+        return 'unreadable_status'
+    failures = status.get('failures', 0)
+    retention = status.get('retention', {})
+    if type(failures) is not int or failures < 0 or not isinstance(retention, dict):
+        return 'unreadable_status'
     stamp = status.get('last_verified')
     if stamp is None:
         return 'no_verified_backup'
@@ -20,9 +26,9 @@ def condition(status, now):
         return 'future_success_time'
     if age > 48 * 3600:
         return 'stale_backup'
-    if status.get('failures', 0) >= 2:
+    if failures >= 2:
         return 'persistent_failure'
-    if status.get('retention', {}).get('error'):
+    if retention.get('error'):
         return 'retention_failure'
     return None
 
@@ -67,12 +73,17 @@ def check(config, now=None, notifier=send):
             alerts = read(root / 'alerts.json')
         except (ValueError, OSError):
             alerts = {}
+        if not isinstance(alerts, dict):
+            alerts = {}
         if label is None:
             write(root / 'alerts.json', {})
             return {'condition': None, 'notified': False}
         previous = alerts.get('last_utc')
         if previous and alerts.get('condition') == label:
-            elapsed = (now - datetime.fromisoformat(previous)).total_seconds()
+            try:
+                elapsed = (now - datetime.fromisoformat(previous)).total_seconds()
+            except (ValueError, TypeError):
+                elapsed = -1  # Corrupt bookkeeping never suppresses delivery.
             if 0 <= elapsed < 24 * 3600:
                 return {'condition': label, 'notified': False, 'suppressed': True}
         notifier(config, label)
