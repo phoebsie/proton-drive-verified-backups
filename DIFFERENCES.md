@@ -1,6 +1,6 @@
 # Derivation and intentional differences
 
-Transport, manifest, streaming tar+zstd and retention modules are adapted from production DR code. Exact source/public mapping remains in private staging. This is a standalone reference, not the production repository/operator.
+Transport, manifest, streaming tar+zstd and retention modules are adapted from Phoebie Agent production DR code and distributed under this project's MIT licence. This is a standalone reference; production operator and private agent implementations are not included.
 
 | Area | Retained behavior | Reference changes/unsupported features |
 | --- | --- | --- |

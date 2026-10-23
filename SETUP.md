@@ -1,6 +1,6 @@
 # Setup with your own Proton Drive account
 
-Start with a disposable destination and synthetic captures on your own Linux host. These instructions do not authorise deployment of this private candidate into its source production system.
+Start with a disposable destination and synthetic captures on your own Linux host. Replace the sample commands and configuration with your own reviewed application captures before relying on a generation for recovery.
 
 ## Dependencies and installation
 
@@ -37,7 +37,7 @@ sudo -H pass init YOUR_FINGERPRINT
 sudo -H env PROTON_DRIVE_CREDENTIALS_STORE=pass /opt/dr-reference/bin/proton-drive auth login
 ```
 
-The [official CLI guide](https://proton.me/support/drive-cli) documents browser login, filesystem commands and `--json`. The pass backend/session-entry convention below comes from the source implementation. Confirm your installed version supports it; stop if it selects another backend. Do not silently fall back to plaintext credentials.
+The [official CLI guide](https://proton.me/support/drive-cli) documents browser login, filesystem commands and `--json`. The [upstream CLI README](https://github.com/ProtonDriveApps/sdk/blob/main/cli/README.md) documents the pass credential backend; the session-entry convention below follows the source implementation. Confirm your installed version supports it; stop if it selects another backend. Do not silently fall back to plaintext credentials.
 
 Create an empty dedicated `DR Reference` folder in your Drive using your own client. Confirm unattended listing as the exact account/HOME/GNUPGHOME that will run systemd. Never point this example at another workflow's folder.
 
