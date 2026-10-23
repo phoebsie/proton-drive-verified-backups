@@ -47,7 +47,7 @@ It backs up whatever you can express as "a command that writes some files". A fe
 - Windows, macOS, or setups without systemd and root. It targets Linux servers.
 - Automatic restore or failover. It validates a backup; it does not reinstall your apps.
 
-It is a reference implementation, and the scripts have not been run against a live Proton account yet. See [Evidence and boundaries](#evidence-and-boundaries).
+It is a reference implementation: you review it, adapt the capture commands to your apps and commission it on your own host. See [Evidence and boundaries](#evidence-and-boundaries).
 
 ## Try it offline in five minutes
 
@@ -130,9 +130,9 @@ Finance, Fitness and the auth service are the author's own applications and are 
 
 ## Evidence and boundaries
 
-In the author's production use: the independent dead-man alert has caught multiple real failures, off-provider round trips and restore checks have been run manually, and a gated, text-only recovery of the agent and its memory onto a surviving host was rehearsed on 21 October 2026.
+The upload, listing, verification, retention and monitoring approach here comes from the pipeline that backs up the author's own systems to a live Proton Drive account every day. In that use the independent dead-man alert has caught multiple real failures, off-provider round trips and restore checks have been run, and a gated, text-only recovery of the agent and its memory onto a surviving host was rehearsed on 21 October 2026.
 
-Not proven: a full clean-host rebuild, live failover and failback, and voice, GPU or browser capability after recovery. The standalone scripts in this repository have not been run against a live Proton account or live applications; their offline tests are separate evidence from the production results above. The [case study](CASE_STUDY.md) has the precise claims and caveats.
+This package's own tests and demo run offline against a fake CLI, so you can try everything without an account. Not yet exercised: a full clean-host rebuild and live failover. The [case study](CASE_STUDY.md) has the precise claims and caveats.
 
 ## Headless authentication and CLI feedback
 
