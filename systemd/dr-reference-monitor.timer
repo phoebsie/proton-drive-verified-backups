@@ -1,0 +1,10 @@
+[Unit]
+Description=DR dead-man every thirty minutes
+
+[Timer]
+OnCalendar=*:0/30
+Persistent=true
+Unit=dr-reference-monitor.service
+
+[Install]
+WantedBy=timers.target

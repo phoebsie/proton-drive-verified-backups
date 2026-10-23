@@ -1,0 +1,17 @@
+#!/usr/bin/python3
+"""Export one local Hindsight bank through supported document-transfer API."""
+from pathlib import Path
+import argparse
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from dr.export import export_bank
+parser = argparse.ArgumentParser()
+parser.add_argument('--api', required=True, help='http://127.0.0.1:your-port')
+parser.add_argument('--bank', required=True)
+parser.add_argument('output_dir')
+args = parser.parse_args()
+try:
+    export_bank(args.api, args.bank, Path(args.output_dir) / 'bank-export.zip')
+except Exception:
+    print('Hindsight export failed', file=sys.stderr)
+    sys.exit(1)

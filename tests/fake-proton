@@ -1,0 +1,35 @@
+#!/usr/bin/python3
+"""Local filesystem test double; never contacts Proton or any network."""
+from pathlib import Path
+import json
+import os
+import shutil
+import sys
+root = Path(os.environ['FAKE_REMOTE'])
+root.mkdir(parents=True, exist_ok=True)
+args = sys.argv[1:]
+if args[0] != 'filesystem':
+    sys.exit(2)
+command = args[1]
+with (root / 'events.jsonl').open('a') as events:
+    events.write(json.dumps({'command': command}) + '\n')
+mode = os.environ.get('FAKE_MODE')
+if command == 'upload':
+    if mode == 'upload-failure':
+        print('sensitive-error-sentinel', file=sys.stderr)
+        sys.exit(9)
+    shutil.copyfile(args[2], root / Path(args[2]).name)
+elif command == 'list':
+    listing = []
+    for path in sorted(root.glob('*.tar.zst')):
+        item = {'name': {'ok': True, 'value': path.name}}
+        if mode != 'missing-size':
+            item['activeRevision'] = {'claimedSize': path.stat().st_size + (1 if mode == 'wrong-size' else 0)}
+        listing.append(item)
+    print(json.dumps(listing))
+elif command == 'download':
+    shutil.copyfile(root / Path(args[2]).name, Path(args[3]) / Path(args[2]).name)
+elif command == 'trash':
+    (root / Path(args[2]).name).unlink()
+else:
+    sys.exit(3)

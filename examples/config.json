@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "root": "/var/lib/dr-reference",
+  "archive_prefix": "reference-dr",
+  "zstd_binary": "/usr/bin/zstd",
+  "binary_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "participants": [
+    {
+      "id": "finance",
+      "contract": "supported-domain-backup-v1",
+      "argv": [
+        "/opt/dr-reference/scripts/synthetic-capture",
+        "finance",
+        "{output_dir}"
+      ],
+      "files": {
+        "state.sqlite3": "sqlite"
+      },
+      "timeout_s": 1800
+    },
+    {
+      "id": "fitness",
+      "contract": "supported-domain-backup-v1",
+      "argv": [
+        "/opt/dr-reference/scripts/synthetic-capture",
+        "fitness",
+        "{output_dir}"
+      ],
+      "files": {
+        "state.sqlite3": "sqlite"
+      },
+      "timeout_s": 1800
+    },
+    {
+      "id": "hermes",
+      "contract": "hermes-native-full-v1",
+      "argv": [
+        "/opt/dr-reference/scripts/synthetic-capture",
+        "hermes",
+        "{output_dir}"
+      ],
+      "files": {
+        "native-full.zip": "zip"
+      },
+      "timeout_s": 1800
+    },
+    {
+      "id": "hindsight",
+      "contract": "hindsight-bank-export-v1",
+      "argv": [
+        "/opt/dr-reference/scripts/synthetic-capture",
+        "hindsight",
+        "{output_dir}"
+      ],
+      "files": {
+        "bank-export.zip": "zip"
+      },
+      "timeout_s": 1800
+    },
+    {
+      "id": "auth",
+      "contract": "supported-domain-backup-v1",
+      "argv": [
+        "/opt/dr-reference/scripts/synthetic-capture",
+        "auth",
+        "{output_dir}"
+      ],
+      "files": {
+        "state.sqlite3": "sqlite",
+        "signing-material.txt": "file"
+      },
+      "timeout_s": 1800
+    }
+  ],
+  "recommissioned_dependencies": [
+    "machine identity",
+    "SSH host and deployment keys",
+    "external OAuth and provider credentials",
+    "notification delivery credentials"
+  ],
+  "notify_file": "/etc/dr-reference/notify.json",
+  "proton": {
+    "binary": "/opt/dr-reference/bin/proton-drive",
+    "remote_dir": "/my-files/DR Reference",
+    "env": {
+      "PROTON_DRIVE_CREDENTIALS_STORE": "pass",
+      "HOME": "/root",
+      "GNUPGHOME": "/root/.gnupg"
+    },
+    "commands": {
+      "list": [
+        "{binary}",
+        "filesystem",
+        "list",
+        "{remote_dir}",
+        "--json"
+      ],
+      "upload": [
+        "{binary}",
+        "filesystem",
+        "upload",
+        "{local_path}",
+        "{remote_dir}"
+      ],
+      "download": [
+        "{binary}",
+        "filesystem",
+        "download",
+        "{remote_path}",
+        "{local_dir}"
+      ],
+      "trash": [
+        "{binary}",
+        "filesystem",
+        "trash",
+        "{remote_path}"
+      ]
+    },
+    "command_timeout_s": 3600
+  }
+}

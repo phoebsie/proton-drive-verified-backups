@@ -1,0 +1,22 @@
+#!/usr/bin/python3
+"""Entirely invented demo data. Not an adapter for a live application."""
+from pathlib import Path
+import argparse
+import json
+import sqlite3
+import zipfile
+parser = argparse.ArgumentParser()
+parser.add_argument('participant', choices=['finance', 'fitness', 'hermes', 'hindsight', 'auth'])
+parser.add_argument('output_dir')
+args = parser.parse_args()
+out = Path(args.output_dir)
+if args.participant in ('finance', 'fitness', 'auth'):
+    with sqlite3.connect(out / 'state.sqlite3') as conn:
+        conn.execute('CREATE TABLE example (id INTEGER PRIMARY KEY, label TEXT)')
+        conn.execute('INSERT INTO example VALUES (1, ?)', ('invented example record',))
+    if args.participant == 'auth':
+        (out / 'signing-material.txt').write_text('SYNTHETIC NON-KEY: replace only under an approved secret contract\n')
+else:
+    name = 'native-full.zip' if args.participant == 'hermes' else 'bank-export.zip'
+    with zipfile.ZipFile(out / name, 'w') as archive:
+        archive.writestr('synthetic.json', json.dumps({'example': True, 'records': ['invented']}))

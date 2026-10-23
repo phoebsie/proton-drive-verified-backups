@@ -1,0 +1,19 @@
+#!/usr/bin/python3
+"""Example online SQLite snapshot adapter; prefer a domain's own backup primitive."""
+from pathlib import Path
+import argparse
+import sqlite3
+import sys
+parser = argparse.ArgumentParser()
+parser.add_argument('--source', required=True)
+parser.add_argument('--name', default='state.sqlite3')
+parser.add_argument('output_dir')
+args = parser.parse_args()
+if Path(args.name).name != args.name:
+    parser.error('name must be a basename')
+source = Path(args.source).resolve()
+with sqlite3.connect(source.as_uri() + '?mode=ro', uri=True) as src:
+    with sqlite3.connect(Path(args.output_dir) / args.name) as dst:
+        src.backup(dst)
+        if dst.execute('PRAGMA integrity_check').fetchall() != [('ok',)]:
+            sys.exit(1)

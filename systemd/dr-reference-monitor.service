@@ -1,0 +1,14 @@
+[Unit]
+Description=Independent DR freshness and persistent failure monitor
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+WorkingDirectory=/opt/dr-reference
+ExecStart=/opt/dr-reference/scripts/dr --config /etc/dr-reference/config.json check
+TimeoutStartSec=90
+NoNewPrivileges=yes
+PrivateTmp=yes

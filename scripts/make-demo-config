@@ -1,0 +1,19 @@
+#!/usr/bin/python3
+"""Generate a runnable config for synthetic captures and the offline fake CLI."""
+from pathlib import Path
+import hashlib
+import json
+import sys
+root = Path(__file__).resolve().parents[1]
+work = Path(sys.argv[1]).resolve()
+work.mkdir(parents=True, exist_ok=True, mode=0o700)
+config = json.loads((root / 'examples/config.json').read_text())
+config['root'] = str(work / 'state')
+config['proton']['binary'] = str(root / 'tests/fake-proton')
+config['proton']['remote_dir'] = '/my-files/DR Reference Demo'
+config['proton']['env'].update(HOME=str(work), FAKE_REMOTE=str(work / 'remote'))
+config['binary_sha256'] = hashlib.sha256((root / 'tests/fake-proton').read_bytes()).hexdigest()
+for entry in config['participants']:
+    entry['argv'] = [str(root / 'scripts/synthetic-capture'), entry['id'], '{output_dir}']
+(work / 'config.json').write_text(json.dumps(config, indent=2))
+print(work / 'config.json')

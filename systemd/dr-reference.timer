@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily verified disaster recovery
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 UTC
+RandomizedDelaySec=30m
+Persistent=true
+Unit=dr-reference.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=Verified Proton Drive disaster recovery generation
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+UMask=0077
+WorkingDirectory=/opt/dr-reference
+ExecStartPre=/opt/dr-reference/scripts/preset-gpg /etc/dr-reference/gpg.json
+ExecStart=/opt/dr-reference/scripts/dr --config /etc/dr-reference/config.json run
+TimeoutStartSec=6h
+KillMode=control-group
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+# Root is deliberate for the pass store in this example. See SECURITY.md.

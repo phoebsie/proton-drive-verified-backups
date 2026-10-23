@@ -1,0 +1,17 @@
+# Threat boundary
+
+The official CLI stores the generation encrypted in Proton Drive. Local tar.zst files are compressed **plaintext**, not independently encrypted by this package. Application snapshots, native ZIPs, auth keys and manifests remain sensitive. Use private directories, encrypted disks, reviewed root-owned code/config and a dedicated destination. A separate encryption envelope is an unsupported extension, not an implied feature.
+
+The unattended root pass/GPG preset trades host-compromise resistance for availability: root can read the local unlock phrase/key/session, access backups and trash remote objects. Long TTLs and local unlock allow reboot recovery but widen exposure. GPG key encryption does not protect against compromised root. Scoped automation tokens/service accounts or hardware-sealed unlock would be alternatives where supported; none is implemented here.
+
+Credentials never enter CLI argv or wrapper logs. Subprocess diagnostics are discarded; CLI errors expose fixed exception classes. Unknown listing schemas, missing size and duplicate object names fail closed. Administrator-provided argv/config remain trusted. The recorded binary digest is checked per top-level transport operation; this does not sandbox a malicious CLI or defeat an administrator changing binary and config together.
+
+Manifest hashes detect corruption, not malicious replacement of both manifest and content. Preserve trusted whole-archive digests independently and use `verify --sha256` after a rebuild. Without a trusted digest, internal checks prove self-consistency only. Listing proves presence/size; application restore/recall remains a separate proof.
+
+The auth-service exception is narrow: approved password hashes/database, session/storage secrets and OIDC signing material needed to restore the established auth boundary may reside **within the encrypted off-provider generation**, under exact allowlisting. It does not authorise arbitrary host secrets. Native Hermes artifacts also remain sensitive application exports under their reviewed secret contract; do not promise all exported configuration is credential-free. Machine identities, SSH host/deployment keys, Proton access, GPG/pass stores, external OAuth/provider/tunnel credentials and browser profiles are excluded or deliberately recommissioned. An old exported token does not establish working access after recovery.
+
+Validation rejects traversal, links, duplicate archive names, unrecorded files, missing participants and known credential-store paths. Tar/ZIP expanded size is bounded to 20 GiB, entry count to 100,000 and manifest size to 1 MiB. This is for trusted self-produced archives, not hostile multi-tenant uploads. Adversarial adapter/filesystem isolation, secure erasure, automatic credential rotation, generic migrations, app-level backup encryption and external monitoring hosting are unsupported.
+
+The bound of nine covers managed, receipted, live verified objects after successful retention. The CLI moves expired objects to trash; account trash/quota behavior belongs to the provider. Unknown/unverified uploads and unrelated material are preserved. Nothing empties trash or prunes before a verified current generation.
+
+The dead-man is independent of the agent process/credentials, not its host. Delivery failure exits nonzero without acknowledgement and retries next timer. Commission an external monitor for controller loss. Offline tests send no notifications.

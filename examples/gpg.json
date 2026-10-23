@@ -1,0 +1,10 @@
+{
+  "home": "/root",
+  "gnupghome": "/root/.gnupg",
+  "passphrase_file": "/etc/dr-reference/gpg-passphrase",
+  "keygrips": [
+    "REPLACE_WITH_YOUR_ENCRYPTION_KEYGRIP"
+  ],
+  "preset_binary": "/usr/lib/gnupg/gpg-preset-passphrase",
+  "pass_entry": "ch.proton.drive/drive-sdk-cli/auth-session"
+}
