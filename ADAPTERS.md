@@ -22,7 +22,7 @@ Paths are fictional. Integrity checks prove structure, not business correctness 
 
 ## Hermes (optional)
 
-Only relevant if you run [Hermes Agent](https://github.com/NousResearch/hermes-agent), an open-source AI agent. `scripts/hermes-capture --binary /your/absolute/hermes --home /your/hermes/home OUTPUT_DIR` runs full `hermes backup --output .../native-full.zip --keep 0`, never `--quick`, and checks the ZIP. Use the application's correct identity and compatible native CLI version, through a reviewed identity-switch wrapper if required. No identity-switch credentials are distributed.
+For the full walkthrough (config, restore, caveats) see [HERMES.md](HERMES.md). Only relevant if you run [Hermes Agent](https://github.com/NousResearch/hermes-agent), an open-source AI agent. `scripts/hermes-capture --binary /your/absolute/hermes --home /your/hermes/home OUTPUT_DIR` runs full `hermes backup --output .../native-full.zip --keep 0`, never `--quick`, and checks the ZIP. Use the application's correct identity and compatible native CLI version, through a reviewed identity-switch wrapper if required. No identity-switch credentials are distributed.
 
 This simple installed-Hermes adapter does **not** reproduce production's isolated-container wrapper, foreign-mount census, non-`.db` WAL repair, browser-profile pre-exclusion, backup-credential stripping, operator adjunct or split-host capture receipt. It rejects sidecars and obvious host credential/browser paths instead of repairing/stripping them. Review the native artifact and version-specific secret contract before use. Native exports may include sensitive application config/provider material. The sample ZIP contains only invented JSON.
 

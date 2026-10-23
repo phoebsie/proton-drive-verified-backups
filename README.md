@@ -26,11 +26,11 @@ The usual advice for self-hosting is: dump your databases, archive your files, p
 
 It backs up whatever you can express as "a command that writes some files". A few realistic setups (illustrations; see [RECIPES.md](RECIPES.md) for the configs):
 
+- **A self-hosted Hermes Agent, and its memory.** The author's own use, and the best-documented one. [Hermes Agent](https://github.com/NousResearch/hermes-agent) is backed up with its own full `hermes backup`, and a [Hindsight](https://github.com/vectorize-io/hindsight) memory bank with its export API, together as one verified backup in Proton Drive. See [HERMES.md](HERMES.md).
 - **A household paperwork server.** Paperless-ngx (a database plus a folder of scanned bills and tax papers), Vaultwarden (family passwords, one SQLite file) and Home Assistant (a config folder), all captured together into one verified backup in Proton Drive, which suits your most private documents.
 - **A club or volunteer organisation.** A membership database and a folder of signed waivers, run by a treasurer who changes every couple of years. The restore check is a single command the next volunteer can run without knowing the system.
 - **A small game server.** A world folder and a few plugin databases, backed up nightly, with a phone alert if it stops.
 - **A one-person business.** Bookkeeping or CRM databases plus an invoices folder, where "I think the backup is running" is not good enough.
-- **A self-hosted AI agent.** This is how the author uses it, to back up an agent's state and memory. See the [worked example](#worked-example-how-the-author-uses-it).
 
 ## Is it a good fit?
 
@@ -92,10 +92,10 @@ For anything that is not SQLite, give it any command that writes the allowed fil
 | --- | --- | --- |
 | `scripts/sqlite-capture` | Any SQLite database | Uses SQLite's online backup API, includes committed WAL data, checks integrity. |
 | Your own command | Folders, `pg_dump`/`mysqldump` output, anything | See [RECIPES.md](RECIPES.md). |
-| `scripts/hermes-capture` | [Hermes Agent](https://github.com/NousResearch/hermes-agent) (open-source AI agent) | Optional. Runs its native full backup. |
-| `scripts/hindsight-capture` | A [Hindsight](https://github.com/vectorize-io/hindsight) memory bank (open-source agent memory) | Optional. Tested against synthetic responses only. |
+| `scripts/hermes-capture` | [Hermes Agent](https://github.com/NousResearch/hermes-agent) (open-source AI agent) | Runs Hermes' own full `hermes backup` and checks the zip. See [HERMES.md](HERMES.md). |
+| `scripts/hindsight-capture` | A [Hindsight](https://github.com/vectorize-io/hindsight) memory bank (open-source agent memory) | Exports through Hindsight's API. See [HERMES.md](HERMES.md). |
 
-Ignore the Hermes and Hindsight helpers unless you run those tools. [ADAPTERS.md](ADAPTERS.md) specifies the capture interface in full.
+If you do not run Hermes or Hindsight, ignore those two helpers. [ADAPTERS.md](ADAPTERS.md) specifies the capture interface in full.
 
 To go live with your own Proton account, follow [SETUP.md](SETUP.md): install and pin the CLI, set up the credential store, register your apps, configure notifications and enable the systemd units. Expect an hour or two if you are comfortable with Linux, GPG and systemd. [RESTORE.md](RESTORE.md) explains validation and recovery, and [SECURITY.md](SECURITY.md) describes the threat boundary.
 
@@ -114,19 +114,19 @@ The monitor alerts after more than 48 hours without verification, two consecutiv
 
 Listing proves presence and size, **not remote-content integrity**. `verify` separately downloads the exact named object, compares a trusted archive hash when you provide one, validates member hashes and runs SQLite and ZIP checks. Run it after setup, after changes and periodically. No restore timer is installed.
 
-## Worked example: how the author uses it
+## Worked example: backing up a Hermes Agent
 
-This package was extracted from the disaster-recovery pipeline of **Phoebie Agent**, a personal AI-agent setup running across a home server and a VPS. In that deployment the registered participants are:
+This package grew out of the disaster-recovery pipeline for the author's own self-hosted AI agent, **Phoebie Agent**, which runs across a home server and a VPS. The full guide is [HERMES.md](HERMES.md): the config, how each helper works, how to restore, and what to watch for. In short, the backup is five participants captured together:
 
 | Participant | What it is | How it is captured |
 | --- | --- | --- |
-| `hermes` | The AI agent runtime (Hermes Agent): its configuration, sessions and learned state | Native full backup |
-| `hindsight` | The agent's long-term memory (Hindsight) | Memory-bank export |
+| `hermes` | The agent runtime ([Hermes Agent](https://github.com/NousResearch/hermes-agent)): configuration, skills, sessions, scheduled jobs, state | Hermes' own full `hermes backup`, wrapped and checked by `scripts/hermes-capture` |
+| `hindsight` | The agent's long-term memory ([Hindsight](https://github.com/vectorize-io/hindsight)) | Bank export through its API, via `scripts/hindsight-capture` |
 | `finance` | The author's personal finance app | The app's own consistent SQLite backup |
 | `fitness` | The author's fitness-coaching app | The app's own SQLite backup |
 | `auth` | The login service in front of those apps | Narrow allowlist: database and recovery material |
 
-Finance, Fitness and the auth service are the author's own applications and are not included here. They stand in for "your other applications". The production multi-host bridge, operator control plane, container capture guards and application activation are deliberately omitted. The [case study](CASE_STUDY.md) describes this deployment in detail, and [DIFFERENCES.md](DIFFERENCES.md) lists what changed when it was extracted.
+Hermes and Hindsight are the two this repository ships helpers for. Finance, Fitness and the auth service are the author's own applications and stand in for "your other apps". The author's multi-host bridge between the home server and the VPS, operator control plane and container capture guards are not included. The [case study](CASE_STUDY.md) describes the full deployment and [DIFFERENCES.md](DIFFERENCES.md) lists what changed when it was extracted.
 
 ## Evidence and boundaries
 
@@ -150,6 +150,7 @@ Scoped headless token or service-account authentication would also avoid the loc
 - `dr/`: the transport, manifests, archive streaming, retention, captures, receipts and monitor.
 - `scripts/`: the command-line tool, capture helpers, synthetic demo fixtures and the optional GPG preset.
 - `examples/`: invented configuration. `systemd/`: daily, boot and monitor units. `tests/`: offline fault tests.
+- [HERMES.md](HERMES.md): backing up a Hermes Agent and its Hindsight memory, step by step.
 - [RECIPES.md](RECIPES.md): tested patterns for folders and database dumps, and the `pipefail` trap.
 - [CASE_STUDY.md](CASE_STUDY.md): the author's deployment as a worked example. [DIFFERENCES.md](DIFFERENCES.md): changes from the author's production code.
 
