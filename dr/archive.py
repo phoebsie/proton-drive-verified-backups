@@ -6,10 +6,10 @@ validation is mandatory before upload: the archive must be listable, contain
 the manifest, contain every manifest member with matching hashes and sizes,
 contain no unrecorded members, and contain no forbidden reconstructable trees.
 
-Working-set rule: never materialize an uncompressed tar sidecar, and never
-extract a second full payload copy merely to validate. Stream tar through
-zstd, and hash members from the decompress stream. Full extract remains only
-for restore rehearsal, which needs files on disk.
+Archive-layer working set: never materialize an uncompressed tar sidecar.
+Stream tar through zstd and hash members from the decompress stream. The
+standalone runner additionally extracts a private payload copy for participant
+checks during both local generation validation and restore validation.
 """
 
 from __future__ import annotations
