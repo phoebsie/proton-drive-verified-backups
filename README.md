@@ -74,6 +74,10 @@ Listing proves presence and size, **not remote-content integrity**. `verify` sep
 
 For your own Proton account, follow [SETUP.md](SETUP.md): install and pin the CLI, set up the credential store, register your applications, configure notifications and enable the systemd units. [RESTORE.md](RESTORE.md) explains validation and recovery. [SECURITY.md](SECURITY.md) describes the threat boundary.
 
+## Provenance and maintenance
+
+This package was extracted from the author's production code on 23 October 2026 and hardened during review. It is a standalone reference, **not a live mirror**: fixes to the author's private system are ported here only when they affect the generic code (transport, verification, retention, monitoring, restore validation). Issues and pull requests are welcome, but there is no support commitment.
+
 ## Worked example: how the author uses it
 
 This package was extracted from the disaster-recovery pipeline of **Phoebie Agent**, a personal AI-agent setup running across a home server and a VPS. In that deployment the registered participants are:
