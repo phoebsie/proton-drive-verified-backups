@@ -1,6 +1,10 @@
-# Phoebie Agent — Proton Drive disaster recovery
+# Proton Drive Verified Backups
 
-An executable, MIT-licensed reference for daily application-state backups to Proton Drive: capture every participant, validate locally, upload, independently confirm the remote object, then advance freshness and prune. It includes systemd scheduling, a separate 48-hour dead-man and manually triggered restore validation.
+*An MIT-licensed Phoebie Agent reference implementation.*
+
+> **Unofficial project.** This is independent software. It is not made, endorsed, sponsored or supported by Proton AG, and uses only Proton's publicly available Drive CLI as a separate, separately installed tool. "Proton" and "Proton Drive" are trademarks of Proton AG, used here only to name the service this works with.
+
+An executable reference for daily application-state backups to Proton Drive: capture every participant, validate locally, upload, independently confirm the remote object, then advance freshness and prune. It includes systemd scheduling, a separate 48-hour dead-man and manually triggered restore validation.
 
 **Phoebie Agent** is a persistent personal-agent ecosystem. Hermes runs the agent, Hindsight holds durable semantic memory, and Finance, Fitness and an auth service own specialist state. Reinstalling software restores code; it does not recover the agent's accumulated memory, durable workflows or domain records. Those need consistent, recoverable state backups, with credentials deliberately recommissioned where required.
 
